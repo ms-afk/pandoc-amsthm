@@ -431,20 +431,20 @@ def amsthm_latex(elem: Element, doc: Doc) -> pf.RawBlock | None:
                 return None
             environment = environments.pop()
             theorem = options.theorems[environment]
-            div_content = pf.convert_text(elem, input_format="panflute", output_format="latex")
             info = elem.attributes.get("info", None)
             id = elem.identifier
-            res = [f"\\begin{{{theorem.env_name}}}"]
+            begin = [f"\\begin{{{theorem.env_name}}}"]
             if info:
                 # wrap in Para for walk
                 ast = pf.Para(*parse_markdown_as_inline(info))
                 ast.walk(partial(cite_to_ref, check_id=options.identifiers))
                 ast = convert_text(ast, input_format="panflute", output_format="latex").strip()
-                res += [f"[{ast}]"]
+                begin += [f"[{ast}]"]
             if id:
-                res.append(f"\\label{{{id}}}")
-            res.append(f"\n{div_content}\n\\end{{{theorem.env_name}}}")
-            return pf.RawBlock("".join(res), format="latex")
+                begin.append(f"\\label{{{id}}}")
+            beginBlock = pf.RawBlock("".join(begin), format="latex")
+            endBlock = pf.RawBlock(f"\\end{{{theorem.env_name}}}", format="latex")
+            return [beginBlock, *elem.content, endBlock]
     # check if pf.Cite is done inside cite_to_ref
     else:
         return cite_to_ref(elem, doc, options.identifiers)
